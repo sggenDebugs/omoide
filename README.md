@@ -22,3 +22,4 @@ An open-source desktop-only, recall-focused password manager written in Rust (kn
 - **Phase**: Planning
 - **Outlook for Release**: June 30, 2026
 - **Platform Support**: Windows, macOS, Linux
+
