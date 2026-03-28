@@ -7,3 +7,20 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+omoide-crypto = { path = "../omoide-crypto" }
+omoide-format = { path = "../omoide-format" }
+serde         = { workspace = true }
+ciborium      = { workspace = true }
+thiserror     = { workspace = true }
+zeroize       = { workspace = true }
+secrecy       = { workspace = true }
+libc          = { workspace = true }
+uuid          = { workspace = true }
+
+[lib]
+name = "omoide_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "omoide"
+path = "src/main.rs"
