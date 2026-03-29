@@ -1,4 +1,3 @@
-
 mod master_key;
 mod entry_key;
 mod recovery_seed;

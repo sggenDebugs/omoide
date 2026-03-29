@@ -1,4 +1,3 @@
-
 use crate::error::CryptoError;
 use crate::types::{MasterKey, EntryKey};
 use argon2::{Argon2, Algorithm, Version, Params};

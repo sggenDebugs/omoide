@@ -1,4 +1,3 @@
-
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// 32-byte per-entry encryption key derived via HKDF from MasterKey.

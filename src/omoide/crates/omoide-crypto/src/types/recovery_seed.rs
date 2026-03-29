@@ -1,4 +1,3 @@
-
 use zeroize::ZeroizeOnDrop;
 
 /// 64-byte BIP39 seed derived from mnemonic phrase.

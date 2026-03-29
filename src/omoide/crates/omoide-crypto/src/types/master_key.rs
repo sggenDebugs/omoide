@@ -1,4 +1,3 @@
-
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// 32-byte master key derived from master password via Argon2id.
