@@ -5,15 +5,18 @@ const MASTER_KEY_SIZE: usize = 32;
 
 /// 32-byte master key derived from master password via Argon2id.
 ///
-/// # Security guarantees
-/// - Zeroed on Drop via ZeroizeOnDrop (T1)
+/// **Security guarantees**
+/// - Zeroed on Drop via ZeroizeOnDrop
 /// - Only accessible via expose_secret() — never implements Display or Debug
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct MasterKey([u8; MASTER_KEY_SIZE]);
 
 impl MasterKey {
+
     /// Allocates a zeroed buffer. Call this before populating
     /// with KDF output.
+    ///
+    /// Returns itself with values of zeroes.
     pub fn new_zeroed() -> Self {
         Self([0u8; MASTER_KEY_SIZE])
     }
@@ -23,7 +26,7 @@ impl MasterKey {
         &self.0
     }
 
-    /// Write access — only used during KDF derivation to populate the buffer.
+    /// Give write access to KDF derivation to populate the buffer.
     pub(crate) fn expose_mut(&mut self) -> &mut [u8; MASTER_KEY_SIZE] {
         &mut self.0
     }
