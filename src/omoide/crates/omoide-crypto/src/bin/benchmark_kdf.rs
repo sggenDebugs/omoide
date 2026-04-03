@@ -24,6 +24,30 @@ fn main() {
     bench("m=19456 t=2 p=1 (default)", &KdfParams {
         memory_cost: 19456, time_cost: 2, parallelism_cost: 1,
     });
+    bench("m=47104 t=3 p=1 (updated)", &KdfParams {
+        memory_cost: 47104, time_cost: 3, parallelism_cost: 1,
+    });
+    bench("m=47104 t=5 p=1 (updated)", &KdfParams {
+        memory_cost: 47104, time_cost: 5, parallelism_cost: 1,
+    });
+    bench("m=47104 t=7 p=1 (updated)", &KdfParams {
+        memory_cost: 47104, time_cost: 7, parallelism_cost: 1,
+    });
+    bench("m=65536 t=3 p=1 (updated)", &KdfParams {
+        memory_cost: 65536, time_cost: 3, parallelism_cost: 1,
+    });
+    bench("m=65536 t=4 p=1 (updated)", &KdfParams {
+        memory_cost: 65536, time_cost: 4, parallelism_cost: 1,
+    });
+    bench("m=98304 t=4 p=1 (updated)", &KdfParams {
+        memory_cost: 98304, time_cost: 4, parallelism_cost: 1,
+    });
+    bench("m=131072 t=3 p=1 (updated)", &KdfParams {
+        memory_cost: 131072, time_cost: 3, parallelism_cost: 1,
+    });
+    bench("m=131072 t=4 p=1 (updated)", &KdfParams {
+        memory_cost: 131072, time_cost: 4, parallelism_cost: 1,
+    });
     bench("m=47104 t=1 p=1", &KdfParams {
         memory_cost: 47104, time_cost: 1, parallelism_cost: 1,
     });
