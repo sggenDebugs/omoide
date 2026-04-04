@@ -286,6 +286,7 @@ dependencies = [
  "ciborium",
  "libc",
  "omoide-crypto",
+ "omoide-env",
  "omoide-format",
  "secrecy",
  "serde",
@@ -300,6 +301,7 @@ version = "0.1.0"
 dependencies = [
  "argon2",
  "hkdf",
+ "omoide-env",
  "secrecy",
  "serde",
  "sha2",
@@ -308,8 +310,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "omoide-env"
+version = "0.1.0"
+
+[[package]]
 name = "omoide-format"
 version = "0.1.0"
+dependencies = [
+ "ciborium",
+ "omoide-crypto",
+ "omoide-env",
+ "serde",
+ "thiserror",
+ "zeroize",
+]
 
 [[package]]
 name = "once_cell"

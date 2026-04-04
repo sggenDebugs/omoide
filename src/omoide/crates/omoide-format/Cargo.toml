@@ -7,3 +7,9 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+ciborium.workspace = true
+omoide-crypto = { version = "0.1.0", path = "../omoide-crypto" }
+omoide-env = { path = "../omoide-env", version = "0.1" }
+serde.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true

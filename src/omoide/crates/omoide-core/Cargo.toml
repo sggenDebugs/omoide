@@ -16,6 +16,7 @@ zeroize       = { workspace = true }
 secrecy       = { workspace = true }
 libc          = { workspace = true }
 uuid          = { workspace = true }
+omoide-env = { version = "0.1.0", path = "../omoide-env" }
 
 [lib]
 name = "omoide_core"

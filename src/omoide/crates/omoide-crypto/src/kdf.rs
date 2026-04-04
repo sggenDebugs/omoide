@@ -3,14 +3,7 @@ use crate::types::{MasterKey, EntryKey};
 use argon2::{Argon2, Algorithm, Version, Params};
 use hkdf::Hkdf;
 use sha2::Sha256;
-
-// Constant Definitions
-const ARGON_OUTPUT_SIZE: Option<usize> = Some(32);
-const SALT_SIZE: usize = 32;
-const KDFPARAMS_MEM_COST: u32 = 19456;
-const KDFPARAMS_TIME_COST: u32 = 2;
-const KDFPARAMS_PARALLEL_COST: u32 = 1;
-const ENTRY_ID_SIZE: usize = 16;
+use omoide_env::*;
 
 /// KDF parameters frozen at vault creation time.
 /// Stored in vault header plaintext so the vault can be reopened
@@ -42,7 +35,7 @@ impl Default for KdfParams {
 /// - `params`   — KDF parameters frozen at vault creation time
 pub fn derive_master_key(
     password: &[u8],
-    salt: &[u8; SALT_SIZE],
+    salt: &[u8; KDF_SALT_SIZE],
     params: &KdfParams,
 ) -> Result<MasterKey, CryptoError> {
     let argon2 = Argon2::new(

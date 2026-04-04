@@ -1,3 +1,5 @@
+use omoide_env::*;
+
 /// Suppresses core dump generation for this process.
 ///
 /// Must be called once at process startup, before any secret material
@@ -13,8 +15,8 @@ pub fn suppress_core_dumps() {
         use libc::{rlimit, setrlimit, RLIMIT_CORE};
 
         let zero = rlimit {
-            rlim_cur: 0,
-            rlim_max: 0,
+            rlim_cur: RLIMIT_CORE_CUR,
+            rlim_max: RLIMIT_CORE_MAX,
         };
 
         // SAFETY: setrlimit is async-signal-safe.

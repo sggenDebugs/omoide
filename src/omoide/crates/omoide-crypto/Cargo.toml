@@ -14,3 +14,4 @@ sha2.workspace = true
 thiserror.workspace = true
 zeroize   = { workspace = true }
 serde = { workspace = true }
+omoide-env = { path = "../omoide-env", version = "0.1" }

@@ -2,7 +2,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "src/omoide/crates/omoide-core", "src/omoide/crates/omoide-crypto", "src/omoide/crates/omoide-format",
+    "src/omoide/crates/omoide-core", "src/omoide/crates/omoide-crypto", "src/omoide/crates/omoide-env", "src/omoide/crates/omoide-format",
 ]
 
 [workspace.package]
