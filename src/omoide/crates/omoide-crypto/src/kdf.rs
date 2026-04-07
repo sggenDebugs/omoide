@@ -1,9 +1,9 @@
 use crate::error::CryptoError;
-use crate::types::{MasterKey, EntryKey};
-use argon2::{Argon2, Algorithm, Version, Params};
+use crate::types::{EntryKey, MasterKey};
+use argon2::{Algorithm, Argon2, Params, Version};
 use hkdf::Hkdf;
-use sha2::Sha256;
 use omoide_env::*;
+use sha2::Sha256;
 
 /// KDF parameters frozen at vault creation time.
 /// Stored in vault header plaintext so the vault can be reopened
@@ -11,8 +11,8 @@ use omoide_env::*;
 /// DO NOT change defaults without running `omoide bench-kdf` and updating ADR-001.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct KdfParams {
-    pub memory_cost:      u32, // memory in KiB — default: 19456 (19 MiB)
-    pub time_cost:        u32, // iterations   — default: 2
+    pub memory_cost: u32,      // memory in KiB — default: 19456 (19 MiB)
+    pub time_cost: u32,        // iterations   — default: 2
     pub parallelism_cost: u32, // parallelism  — default: 1
 }
 
@@ -20,8 +20,8 @@ pub struct KdfParams {
 impl Default for KdfParams {
     fn default() -> Self {
         Self {
-            memory_cost:      KDFPARAMS_MEM_COST,
-            time_cost:        KDFPARAMS_TIME_COST,
+            memory_cost: KDFPARAMS_MEM_COST,
+            time_cost: KDFPARAMS_TIME_COST,
             parallelism_cost: KDFPARAMS_PARALLEL_COST,
         }
     }
@@ -45,7 +45,7 @@ pub fn derive_master_key(
             params.memory_cost,
             params.time_cost,
             params.parallelism_cost,
-            ARGON_OUTPUT_SIZE
+            ARGON_OUTPUT_SIZE,
         )?,
     );
     let mut key = MasterKey::new_zeroed();
@@ -53,26 +53,25 @@ pub fn derive_master_key(
     Ok(key)
 }
 
-
 /// Derives a 32-byte per-entry key from the MasterKey via HKDF-SHA256.
 ///
 /// ### Arguments
 /// - `master`   — the vault master key (never used directly for encryption)
 /// - `entry_id` — UUID bytes of the entry (16 bytes) — used as HKDF salt
 /// - `info`     — purpose tag of key usage:
-///  `b"entry-enc"` for vault entries
-///  `b"seed-wrap"` for BIP39 recovery seed (reserved, future)
+///
+///     `b"entry-enc"` for vault entries
+///
+///     `b"seed-wrap"` for BIP39 recovery seed (reserved, future)
 pub fn derive_entry_key(
     master: &MasterKey,
     entry_id: &[u8; ENTRY_ID_SIZE],
     info: &[u8],
 ) -> Result<EntryKey, CryptoError> {
-    let hashed_key = Hkdf::<Sha256>::new(
-        Some(entry_id),
-        master.expose_secret()
-    );
+    let hashed_key = Hkdf::<Sha256>::new(Some(entry_id), master.expose_secret());
     let mut key = EntryKey::new_zeroed();
-    hashed_key.expand(info, key.expose_mut())
+    hashed_key
+        .expand(info, key.expose_mut())
         .map_err(|_| CryptoError::HkdfExpand)?;
     Ok(key)
 }
@@ -88,8 +87,8 @@ mod tests {
     // use minimal params in tests — default params take ~300ms per call
     fn fast_params() -> KdfParams {
         KdfParams {
-            memory_cost:      1024, // 1024 KiB — fast enough for tests
-            time_cost:        1,
+            memory_cost: 1024, // 1024 KiB — fast enough for tests
+            time_cost: 1,
             parallelism_cost: 1,
         }
     }
@@ -97,8 +96,7 @@ mod tests {
     #[test]
     fn derive_master_key_succeeds() {
         // T2: KDF produces a non-zero key
-        let key = derive_master_key(TEST_PASSWORD, TEST_SALT, &fast_params())
-            .expect("KDF failed");
+        let key = derive_master_key(TEST_PASSWORD, TEST_SALT, &fast_params()).expect("KDF failed");
         // key must not be all zeros — Argon2id must have done work
         assert_ne!(key.expose_secret(), &[0u8; 32]);
     }
@@ -136,7 +134,7 @@ mod tests {
         let entry_id = [0u8; 16]; // same entry_id deliberately
 
         let entry_key = derive_entry_key(&master, &entry_id, b"entry-enc").unwrap();
-        let seed_key  = derive_entry_key(&master, &entry_id, b"seed-wrap").unwrap();
+        let seed_key = derive_entry_key(&master, &entry_id, b"seed-wrap").unwrap();
 
         assert_ne!(entry_key.expose_secret(), seed_key.expose_secret());
     }
