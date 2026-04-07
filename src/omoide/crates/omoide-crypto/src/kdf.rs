@@ -60,8 +60,8 @@ pub fn derive_master_key(
 /// - `master`   — the vault master key (never used directly for encryption)
 /// - `entry_id` — UUID bytes of the entry (16 bytes) — used as HKDF salt
 /// - `info`     — purpose tag of key usage:
-///                `b"entry-enc"` for vault entries
-///                `b"seed-wrap"` for BIP39 recovery seed (reserved, future)
+///  `b"entry-enc"` for vault entries
+///  `b"seed-wrap"` for BIP39 recovery seed (reserved, future)
 pub fn derive_entry_key(
     master: &MasterKey,
     entry_id: &[u8; ENTRY_ID_SIZE],

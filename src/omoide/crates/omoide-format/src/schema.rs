@@ -76,3 +76,61 @@ pub struct Entry {
     pub created:  u64,  // Unix timestamp
     pub updated:  u64,  // Unix timestamp
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use omoide_crypto::kdf::KdfParams;
+
+    fn test_header() -> VaultHeader {
+        VaultHeader {
+            kdf_params: KdfParams::default(),
+            salt:       [1u8; KDF_SALT_SIZE],
+            header_aad: [2u8; HEADER_AAD_SIZE],
+        }
+    }
+
+    fn test_entry() -> EncryptedEntry {
+        EncryptedEntry {
+            id:         [3u8; ENTRY_ID_SIZE],
+            nonce:      [4u8; AES_NONCE_SIZE],
+            ciphertext: vec![5u8; 48],
+        }
+    }
+
+    #[test]
+    fn vault_header_cbor_round_trip() {
+        let header = test_header();
+        let mut buf = Vec::new();
+        ciborium::ser::into_writer(&header, &mut buf)
+            .expect("serialize failed");
+        let decoded: VaultHeader = ciborium::de::from_reader(buf.as_slice())
+            .expect("deserialize failed");
+        assert_eq!(decoded.salt, header.salt);
+        assert_eq!(decoded.header_aad, header.header_aad);
+    }
+
+    #[test]
+    fn encrypted_entry_cbor_round_trip() {
+        let entry = test_entry();
+        let mut buf = Vec::new();
+        ciborium::ser::into_writer(&entry, &mut buf)
+            .expect("serialize failed");
+        let decoded: EncryptedEntry = ciborium::de::from_reader(buf.as_slice())
+            .expect("deserialize failed");
+        assert_eq!(decoded.id, entry.id);
+        assert_eq!(decoded.nonce, entry.nonce);
+        assert_eq!(decoded.ciphertext, entry.ciphertext);
+    }
+
+    #[test]
+    fn magic_bytes_are_correct_length() {
+        assert_eq!(VAULT_MAGIC.len(), 8);
+    }
+
+    #[test]
+    fn magic_bytes_are_not_valid_utf8_after_null() {
+        // confirms the null terminator is present
+        assert_eq!(VAULT_MAGIC[7], 0x00);
+    }
+}
