@@ -27,7 +27,8 @@ impl RecoverySeed {
 
     /// Allow dead code first, then remove this method and its uses once Seed backup is implemented.
     #[allow(dead_code)]
-    pub(crate) fn expose_mut(&mut self) -> &mut [u8; RECV_SEED_SIZE] { // to be used
+    pub(crate) fn expose_mut(&mut self) -> &mut [u8; RECV_SEED_SIZE] {
+        // to be used
         &mut self.0
     }
 }

@@ -7,7 +7,7 @@ fn main() {
     println!("[security] core dump suppression applied");
 
     let key = MasterKey::new_zeroed();
-    if mlock_secret(&key){
+    if mlock_secret(&key) {
         println!("[security] swap protection applied");
     }
     // future: vault unlock, UI init, etc. all go below this line

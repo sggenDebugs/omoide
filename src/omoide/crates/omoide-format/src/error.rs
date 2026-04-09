@@ -1,5 +1,5 @@
+use ciborium::{de::Error as CborDeError, ser::Error as CborSerError};
 use thiserror::Error;
-use ciborium::{ser::Error as CborSerError, de::Error as CborDeError};
 
 #[derive(Debug, Error)]
 pub enum FormatError {
@@ -16,5 +16,5 @@ pub enum FormatError {
     CborDeserialize(#[from] CborDeError<std::io::Error>),
 
     #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error)
+    Io(#[from] std::io::Error),
 }

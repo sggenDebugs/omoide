@@ -7,10 +7,10 @@ pub const ENTRY_ID_SIZE: usize = 16;
 pub const KDF_SALT_SIZE: usize = 32;
 
 /// Memory cost of KDF in KiB.
-pub const KDFPARAMS_MEM_COST: u32 = 19456;
+pub const KDFPARAMS_MEM_COST: u32 = 65536;
 
 /// Time cost of KDF.
-pub const KDFPARAMS_TIME_COST: u32 = 2;
+pub const KDFPARAMS_TIME_COST: u32 = 4;
 
 /// Parallelism cost of KDF.
 pub const KDFPARAMS_PARALLEL_COST: u32 = 1;

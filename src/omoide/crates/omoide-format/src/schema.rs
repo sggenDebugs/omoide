@@ -1,7 +1,7 @@
 use omoide_crypto::kdf::KdfParams;
+use omoide_env::*;
 use serde::{Deserialize, Serialize};
 use zeroize::ZeroizeOnDrop;
-use omoide_env::*;
 
 /// Plaintext vault header — stored unencrypted at the start of vault.db.
 ///
@@ -9,7 +9,7 @@ use omoide_env::*;
 /// password. Must be read before any decryption can occur.
 ///
 /// ### Security
-/// 
+///
 /// This struct is intentionally plaintext. An attacker with the vault file
 /// can read these fields — that is acceptable because:
 /// - `kdf_params` and `salt` are needed to derive the key, not to bypass it
@@ -59,7 +59,7 @@ pub struct EncryptedEntry {
 /// Loaded entirely into memory on vault unlock, written atomically on seal.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VaultFile {
-    pub header:  VaultHeader,
+    pub header: VaultHeader,
     pub entries: Vec<EncryptedEntry>,
 }
 
@@ -68,13 +68,13 @@ pub struct VaultFile {
 /// Serialized to CBOR bytes, then encrypted into EncryptedEntry.ciphertext.
 #[derive(Debug, Serialize, Deserialize, ZeroizeOnDrop)]
 pub struct Entry {
-    pub title:    String,
+    pub title: String,
     pub username: String,
     pub password: String,
-    pub url:      String,
-    pub notes:    String,
-    pub created:  u64,  // Unix timestamp
-    pub updated:  u64,  // Unix timestamp
+    pub url: String,
+    pub notes: String,
+    pub created: u64, // Unix timestamp
+    pub updated: u64, // Unix timestamp
 }
 
 #[cfg(test)]
@@ -85,15 +85,15 @@ mod tests {
     fn test_header() -> VaultHeader {
         VaultHeader {
             kdf_params: KdfParams::default(),
-            salt:       [1u8; KDF_SALT_SIZE],
+            salt: [1u8; KDF_SALT_SIZE],
             header_aad: [2u8; HEADER_AAD_SIZE],
         }
     }
 
     fn test_entry() -> EncryptedEntry {
         EncryptedEntry {
-            id:         [3u8; ENTRY_ID_SIZE],
-            nonce:      [4u8; AES_NONCE_SIZE],
+            id: [3u8; ENTRY_ID_SIZE],
+            nonce: [4u8; AES_NONCE_SIZE],
             ciphertext: vec![5u8; 48],
         }
     }
@@ -102,10 +102,9 @@ mod tests {
     fn vault_header_cbor_round_trip() {
         let header = test_header();
         let mut buf = Vec::new();
-        ciborium::ser::into_writer(&header, &mut buf)
-            .expect("serialize failed");
-        let decoded: VaultHeader = ciborium::de::from_reader(buf.as_slice())
-            .expect("deserialize failed");
+        ciborium::ser::into_writer(&header, &mut buf).expect("serialize failed");
+        let decoded: VaultHeader =
+            ciborium::de::from_reader(buf.as_slice()).expect("deserialize failed");
         assert_eq!(decoded.salt, header.salt);
         assert_eq!(decoded.header_aad, header.header_aad);
     }
@@ -114,10 +113,9 @@ mod tests {
     fn encrypted_entry_cbor_round_trip() {
         let entry = test_entry();
         let mut buf = Vec::new();
-        ciborium::ser::into_writer(&entry, &mut buf)
-            .expect("serialize failed");
-        let decoded: EncryptedEntry = ciborium::de::from_reader(buf.as_slice())
-            .expect("deserialize failed");
+        ciborium::ser::into_writer(&entry, &mut buf).expect("serialize failed");
+        let decoded: EncryptedEntry =
+            ciborium::de::from_reader(buf.as_slice()).expect("deserialize failed");
         assert_eq!(decoded.id, entry.id);
         assert_eq!(decoded.nonce, entry.nonce);
         assert_eq!(decoded.ciphertext, entry.ciphertext);

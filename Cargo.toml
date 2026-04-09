@@ -1,7 +1,7 @@
 # Cargo.toml (workspace root)
 [workspace]
 resolver = "2"
-members = [
+members = ["src/omoide/crates/omoide-cli",
     "src/omoide/crates/omoide-core", "src/omoide/crates/omoide-crypto", "src/omoide/crates/omoide-env", "src/omoide/crates/omoide-format",
 ]
 

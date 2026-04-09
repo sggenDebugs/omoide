@@ -12,7 +12,6 @@ const MASTER_KEY_SIZE: usize = 32;
 pub struct MasterKey([u8; MASTER_KEY_SIZE]);
 
 impl MasterKey {
-
     /// Allocates a zeroed buffer. Call this before populating
     /// with KDF output.
     ///

@@ -83,8 +83,8 @@ This creates a continuous, low-friction spaced-repetition loop for your master p
 
 | Milestone | Target | Status |
 |---|---|---|
-| Core crypto primitives + vault format | 2026-03 | In Progress |
-| Recall Mode engine | 2026-04 | Planned |
+| Core crypto primitives + vault format | 2026-03 | Completed |
+| Recall Mode engine | 2026-04 | In Progress |
 | Desktop UI (egui prototype) | 2026-05 | Planned |
 | BIP39 recovery flow | 2026-06 | Planned |
 | Security audit + hardening | 2026-07 | Planned |

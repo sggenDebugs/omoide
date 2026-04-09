@@ -1,0 +1,16 @@
+[package]
+name = "omoide-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+omoide-core = { path = "../omoide-core", version = "0.1" }
+omoide-crypto = { path = "../omoide-crypto", version = "0.1" }
+omoide-format = { path = "../omoide-format", version = "0.1" }
+omoide-env = { path = "../omoide-env", version = "0.1" }
+rand = { workspace = true }
+secrecy = { workspace = true }
+ciborium = { workspace = true }

@@ -3,7 +3,7 @@ pub mod error;
 pub mod kdf;
 pub mod types;
 
-pub use aead::{encrypt_entry, decrypt_entry};
+pub use aead::{decrypt_entry, encrypt_entry};
 pub use error::CryptoError;
-pub use kdf::{derive_master_key, derive_entry_key, KdfParams};
-pub use types::{MasterKey, EntryKey, RecoverySeed};
+pub use kdf::{derive_entry_key, derive_master_key, KdfParams};
+pub use types::{EntryKey, MasterKey, RecoverySeed};
