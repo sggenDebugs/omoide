@@ -76,7 +76,7 @@ fn entry_from_different_vault_fails_aad_check() {
     let plaintext = b"secret vault entry data";
     let ciphertext = encrypt_entry(&entry_key, &NONCE, &aad_1, plaintext).unwrap();
 
-    // Attacker transplants entry to Vault 2 and tries to decrypt with Vault 2's AAD context
+    // Attacker invades entry to Vault 2 and tries to decrypt with Vault 2's AAD context
     let err = decrypt_entry(&entry_key, &NONCE, &aad_2, &ciphertext).unwrap_err();
     assert!(matches!(err, CryptoError::DecryptionFailed));
 }

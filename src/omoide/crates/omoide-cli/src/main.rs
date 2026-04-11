@@ -101,33 +101,60 @@ fn setup_vaults() -> (PathBuf, PathBuf) {
 }
 
 fn display_vault(path: &Path, password: &str) -> bool {
+    println!("\n[DEBUG] Accessing locked vault at {:?}", path);
     let vault = match open(path) {
-        Ok(v) => v,
-        Err(_) => {
-            println!("❌ Failed to read vault file.");
+        Ok(v) => {
+            println!("[DEBUG] Vault file loaded successfully into memory.");
+            println!(
+                "[DEBUG] Vault header contains: KDF salt ({} bytes), AAD ({} bytes)",
+                v.header.salt.len(),
+                v.header.header_aad.len()
+            );
+            println!(
+                "[DEBUG] Locked vault contains {} encrypted entries.",
+                v.entries.len()
+            );
+            v
+        }
+        Err(e) => {
+            println!(" Failed to read vault file: {}", e);
             return false;
         }
     };
 
+    println!("[DEBUG] Applying KDF (Argon2id) to derive master key from password...");
     let master_key = match derive_master_key(
         password.as_bytes(),
         &vault.header.salt,
         &vault.header.kdf_params,
     ) {
-        Ok(key) => key,
-        Err(_) => {
-            println!("❌ KDF failed.");
+        Ok(key) => {
+            println!("[DEBUG] KDF complete. Master key derived successfully.");
+            key
+        }
+        Err(e) => {
+            println!(" KDF failed: {}", e);
             return false;
         }
     };
 
     let mut decrypted_entries = Vec::new();
-    for enc_entry in vault.entries {
+    println!("[DEBUG] Processing encrypted entries...");
+    for (i, enc_entry) in vault.entries.into_iter().enumerate() {
+        println!("[DEBUG] -> Entry {}: Deriving unique entry key...", i + 1);
         let entry_key = match derive_entry_key(&master_key, &enc_entry.id, b"entry-enc") {
             Ok(k) => k,
-            Err(_) => continue,
+            Err(e) => {
+                println!("[DEBUG] -> Entry {}: Key derivation failed: {}", i + 1, e);
+                continue;
+            }
         };
 
+        println!(
+            "[DEBUG] -> Entry {}: Decrypting ciphertext ({} bytes)...",
+            i + 1,
+            enc_entry.ciphertext.len()
+        );
         match decrypt_entry(
             &entry_key,
             &enc_entry.nonce,
@@ -135,17 +162,21 @@ fn display_vault(path: &Path, password: &str) -> bool {
             &enc_entry.ciphertext,
         ) {
             Ok(pt) => {
+                println!(
+                    "[DEBUG] -> Entry {}: Decrypted successfully. Unlocked! decoding CBOR...",
+                    i + 1
+                );
                 let entry: Entry = ciborium::de::from_reader(pt.as_slice()).unwrap();
                 decrypted_entries.push(entry);
             }
-            Err(_) => {
-                println!("❌ Incorrect master password or corrupted entry!");
+            Err(e) => {
+                println!("[DEBUG] Authentication failed for entry {}! Incorrect master password or corrupted entry: {}", i + 1, e);
                 return false;
             }
         }
     }
 
-    println!("\n✅ Master Password Correct!");
+    println!("\n Master Password Correct! Vault completely unlocked.");
     println!("--- Vault Entries ---");
     for e in decrypted_entries {
         println!("Title: {}", e.title);

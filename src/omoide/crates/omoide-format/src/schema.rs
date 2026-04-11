@@ -26,7 +26,7 @@ pub struct VaultHeader {
     pub salt: [u8; KDF_SALT_SIZE],
 
     /// 32 random bytes — bound into every AEAD tag as Additional
-    /// Authenticated Data. Prevents transplanting EncryptedEntry records
+    /// Authenticated Data. Prevents invading EncryptedEntry records
     /// from one vault into another vault.
     pub header_aad: [u8; HEADER_AAD_SIZE],
 }
