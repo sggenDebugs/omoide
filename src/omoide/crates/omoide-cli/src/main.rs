@@ -3,14 +3,16 @@ use omoide_crypto::aead::{decrypt_entry, encrypt_entry};
 use omoide_crypto::kdf::{derive_entry_key, derive_master_key, KdfParams};
 use omoide_env::{AES_NONCE_SIZE, ENTRY_ID_SIZE, HEADER_AAD_SIZE, KDF_SALT_SIZE};
 use omoide_format::schema::{EncryptedEntry, Entry, VaultFile, VaultHeader};
-use rand::{rngs::OsRng, RngCore};
+use rand::{rngs::SysRng, TryRng};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 fn generate_random_bytes<const N: usize>() -> [u8; N] {
     let mut buf = [0u8; N];
-    OsRng.fill_bytes(&mut buf);
+    SysRng
+        .try_fill_bytes(&mut buf)
+        .expect("CRITICAL: OS failed to provide secure randomness.");
     buf
 }
 
@@ -29,7 +31,10 @@ fn anchor_memory_wizard() {
         passphrase = "AtticSprintingViolin".to_string();
     }
 
-    println!("\n[SUCCESS] Your highly secure, SRS-compatible passphrase is: {}", passphrase);
+    println!(
+        "\n[SUCCESS] Your highly secure, SRS-compatible passphrase is: {}",
+        passphrase
+    );
     println!("This utilizes 'Nonsense Logic' to maintain high entropy while securely anchoring to your personal memory.");
     println!("Press Enter to continue...");
     let _ = prompt("");
@@ -149,7 +154,10 @@ fn display_vault(path: &Path, password: &str) -> bool {
     if is_due {
         println!("\n*******************************************************");
         println!("[SECURITY] MANDATORY RECALL MODE TRIGGERED!");
-        println!("[SECURITY] Rehearsal interval ({:.1}h) has elapsed.", vault.header.srs_state.current_interval_hours);
+        println!(
+            "[SECURITY] Rehearsal interval ({:.1}h) has elapsed.",
+            vault.header.srs_state.current_interval_hours
+        );
         println!("[SECURITY] To maintain vault access and fight cognitive decay,");
         println!("[SECURITY] you must explicitly type your Master Password.");
         println!("*******************************************************\n");
@@ -218,12 +226,20 @@ fn display_vault(path: &Path, password: &str) -> bool {
     if is_due {
         let mut updated_vault = vault;
         updated_vault.header.srs_state.last_rehearsal = now;
-        updated_vault.header.srs_state.current_interval_hours = 
-            omoide_core::srs::next_interval(updated_vault.header.srs_state.current_interval_hours, true);
-        
-        println!("[DEBUG] SRS State updated! Next rehearsal in {:.1} hours.", updated_vault.header.srs_state.current_interval_hours);
+        updated_vault.header.srs_state.current_interval_hours = omoide_core::srs::next_interval(
+            updated_vault.header.srs_state.current_interval_hours,
+            true,
+        );
+
+        println!(
+            "[DEBUG] SRS State updated! Next rehearsal in {:.1} hours.",
+            updated_vault.header.srs_state.current_interval_hours
+        );
         if let Err(e) = seal(&updated_vault, path) {
-            println!("[WARNING] Failed to commit updated SRS state to vault: {}", e);
+            println!(
+                "[WARNING] Failed to commit updated SRS state to vault: {}",
+                e
+            );
         }
     }
 

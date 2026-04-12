@@ -27,8 +27,7 @@ pub fn open(path: &Path) -> Result<VaultFile, VaultError> {
 
     // Read version
     let mut ver_bytes = [0u8; 2];
-    file.read_exact(&mut ver_bytes)
-        .map_err(|e| VaultError::Io(e))?;
+    file.read_exact(&mut ver_bytes).map_err(VaultError::Io)?;
     let _version = u16::from_le_bytes(ver_bytes);
     // In the future: if version == 1 { migrate to 2 }
 

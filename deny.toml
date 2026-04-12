@@ -14,7 +14,9 @@ allow = [
 multiple-versions = "warn"
 wildcards = "allow"
 skip = [
-    { crate = "getrandom@0.2.17", reason = "RustCrypto ecosystem uses older getrandom, while uuid/tempfile use latest" }
+    { crate = "getrandom@0.2.17", reason = "RustCrypto ecosystem uses older getrandom, while uuid/tempfile use latest" },
+    { name = "rand_core" },
+    { name = "cpufeatures" }
 ]
 
 
