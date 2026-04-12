@@ -14,6 +14,27 @@ fn generate_random_bytes<const N: usize>() -> [u8; N] {
     buf
 }
 
+fn anchor_memory_wizard() {
+    println!("\n--- Password Architect Wizard ---");
+    println!("Let's build an 'Anchor Memory' passphrase for maximum retention and entropy.");
+    println!("Think of a highly specific, private childhood place.");
+    let place = prompt("Place (e.g., Attic): ");
+    println!("Think of a vivid, unrelated action verb.");
+    let action = prompt("Action (e.g., Sprinting): ");
+    println!("Think of an unrelated object.");
+    let object = prompt("Object (e.g., Violin): ");
+
+    let mut passphrase = format!("{}{}{}", place.trim(), action.trim(), object.trim());
+    if passphrase.is_empty() {
+        passphrase = "AtticSprintingViolin".to_string();
+    }
+
+    println!("\n[SUCCESS] Your highly secure, SRS-compatible passphrase is: {}", passphrase);
+    println!("This utilizes 'Nonsense Logic' to maintain high entropy while securely anchoring to your personal memory.");
+    println!("Press Enter to continue...");
+    let _ = prompt("");
+}
+
 fn create_sample_vault(path: &Path, password: &str, entries: Vec<Entry>) {
     // We use faster params for tests/demo
     let params = KdfParams {
@@ -50,6 +71,7 @@ fn create_sample_vault(path: &Path, password: &str, entries: Vec<Entry>) {
             kdf_params: params,
             salt,
             header_aad,
+            srs_state: Default::default(),
         },
         entries: encrypted_entries,
     };
@@ -122,6 +144,20 @@ fn display_vault(path: &Path, password: &str) -> bool {
         }
     };
 
+    let now = omoide_core::srs::get_current_time_secs();
+    let is_due = omoide_core::srs::is_rehearsal_due(&vault.header.srs_state, now);
+    if is_due {
+        println!("\n*******************************************************");
+        println!("[SECURITY] MANDATORY RECALL MODE TRIGGERED!");
+        println!("[SECURITY] Rehearsal interval ({:.1}h) has elapsed.", vault.header.srs_state.current_interval_hours);
+        println!("[SECURITY] To maintain vault access and fight cognitive decay,");
+        println!("[SECURITY] you must explicitly type your Master Password.");
+        println!("*******************************************************\n");
+        // In a real app with biometrics, we would disable biometrics here.
+    } else {
+        println!("[DEBUG] SRS Rehearsal is not due yet. Proceeding with normal unlock.");
+    }
+
     println!("[DEBUG] Applying KDF (Argon2id) to derive master key from password...");
     let master_key = match derive_master_key(
         password.as_bytes(),
@@ -140,7 +176,7 @@ fn display_vault(path: &Path, password: &str) -> bool {
 
     let mut decrypted_entries = Vec::new();
     println!("[DEBUG] Processing encrypted entries...");
-    for (i, enc_entry) in vault.entries.into_iter().enumerate() {
+    for (i, enc_entry) in vault.entries.iter().enumerate() {
         println!("[DEBUG] -> Entry {}: Deriving unique entry key...", i + 1);
         let entry_key = match derive_entry_key(&master_key, &enc_entry.id, b"entry-enc") {
             Ok(k) => k,
@@ -177,6 +213,20 @@ fn display_vault(path: &Path, password: &str) -> bool {
     }
 
     println!("\n Master Password Correct! Vault completely unlocked.");
+
+    // Phase 2: Write back the updated SRS State after a successful unlock
+    if is_due {
+        let mut updated_vault = vault;
+        updated_vault.header.srs_state.last_rehearsal = now;
+        updated_vault.header.srs_state.current_interval_hours = 
+            omoide_core::srs::next_interval(updated_vault.header.srs_state.current_interval_hours, true);
+        
+        println!("[DEBUG] SRS State updated! Next rehearsal in {:.1} hours.", updated_vault.header.srs_state.current_interval_hours);
+        if let Err(e) = seal(&updated_vault, path) {
+            println!("[WARNING] Failed to commit updated SRS state to vault: {}", e);
+        }
+    }
+
     println!("--- Vault Entries ---");
     for e in decrypted_entries {
         println!("Title: {}", e.title);
@@ -208,21 +258,38 @@ fn main() {
     println!("  2. Vault B (password: '12345')");
 
     loop {
-        println!("\nSelect a vault to unlock:");
-        println!("1) Vault A");
-        println!("2) Vault B");
-        println!("3) Exit");
+        println!("Select an option:");
+        println!("1) Unlock Vault A");
+        println!("2) Unlock Vault B");
+        println!("3) Generate Master Password (Wizard)");
+        println!("4) Fast-Forward Time (Force Recall Mode)");
+        println!("5) Exit");
 
         let choice = prompt("> ");
         let selected_path = match choice.as_str() {
             "1" => &v1,
             "2" => &v2,
             "3" => {
+                anchor_memory_wizard();
+                continue;
+            }
+            "4" => {
+                println!("[DEBUG] Simulating time advancing by updating the Vault B header...");
+                if let Ok(mut v) = open(&v2) {
+                    v.header.srs_state.last_rehearsal = 10; // set 10 seconds since epoch to guarantee due
+                    let _ = seal(&v, &v2);
+                    println!("[DEBUG] Time leap successful. Try opening Vault B next.");
+                } else {
+                    println!("[ERROR] Could not open Vault B.");
+                }
+                continue;
+            }
+            "5" => {
                 println!("Goodbye!");
                 break;
             }
             _ => {
-                println!("Invalid choice. Expected 1, 2, or 3.");
+                println!("Invalid choice. Please try again.");
                 continue;
             }
         };

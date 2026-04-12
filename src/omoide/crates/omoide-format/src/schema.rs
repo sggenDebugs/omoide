@@ -29,6 +29,31 @@ pub struct VaultHeader {
     /// Authenticated Data. Prevents invading EncryptedEntry records
     /// from one vault into another vault.
     pub header_aad: [u8; HEADER_AAD_SIZE],
+
+    /// State for the Recall Spaced Repetition System.
+    pub srs_state: SrsState,
+}
+
+/// Spaced Repetition System State.
+/// Encapsulates the tracking criteria for Emergency Access Rehearsals.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SrsState {
+    /// Last rehearsal unix timestamp in seconds
+    pub last_rehearsal: u64,
+    /// Current interval in hours
+    pub current_interval_hours: f32,
+    /// Number of consecutive failures
+    pub consecutive_failures: u8,
+}
+
+impl Default for SrsState {
+    fn default() -> Self {
+        Self {
+            last_rehearsal: SRS_DEFAULT_LAST_REHEARSAL,
+            current_interval_hours: SRS_DEFAULT_INTERVAL_HOURS,
+            consecutive_failures: SRS_DEFAULT_CONSECUTIVE_FAILURES,
+        }
+    }
 }
 
 /// A single encrypted vault entry as stored in vault.db.
@@ -87,6 +112,7 @@ mod tests {
             kdf_params: KdfParams::default(),
             salt: [1u8; KDF_SALT_SIZE],
             header_aad: [2u8; HEADER_AAD_SIZE],
+            srs_state: SrsState::default(),
         }
     }
 

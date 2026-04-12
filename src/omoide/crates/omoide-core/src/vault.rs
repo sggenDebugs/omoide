@@ -25,6 +25,13 @@ pub fn open(path: &Path) -> Result<VaultFile, VaultError> {
         return Err(VaultError::InvalidMagic);
     }
 
+    // Read version
+    let mut ver_bytes = [0u8; 2];
+    file.read_exact(&mut ver_bytes)
+        .map_err(|e| VaultError::Io(e))?;
+    let _version = u16::from_le_bytes(ver_bytes);
+    // In the future: if version == 1 { migrate to 2 }
+
     // Read header
     let header: VaultHeader = ciborium::de::from_reader(&mut file)?;
 
@@ -46,6 +53,9 @@ pub fn seal(vault: &VaultFile, path: &Path) -> Result<(), VaultError> {
 
     // Write magic bytes
     tmp_file.write_all(&VAULT_MAGIC)?;
+
+    // Write version
+    tmp_file.write_all(&omoide_env::VAULT_VERSION.to_le_bytes())?;
 
     // Serialize header
     ciborium::ser::into_writer(&vault.header, &mut tmp_file)?;
@@ -72,6 +82,7 @@ pub fn seal(vault: &VaultFile, path: &Path) -> Result<(), VaultError> {
 mod tests {
     use super::*;
     use omoide_crypto::kdf::KdfParams;
+    use omoide_format::schema::SrsState;
     use tempfile::tempdir;
 
     fn dummy_vault() -> VaultFile {
@@ -80,6 +91,7 @@ mod tests {
                 kdf_params: KdfParams::default(),
                 salt: [0; 32],
                 header_aad: [0; 32],
+                srs_state: SrsState::default(),
             },
             entries: vec![],
         }

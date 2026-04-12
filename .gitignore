@@ -1,2 +1,4 @@
 target/
 tasks.md
+demo_vaults/*
+docs/ignored/*

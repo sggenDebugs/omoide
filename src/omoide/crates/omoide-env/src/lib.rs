@@ -24,7 +24,7 @@ pub const VAULT_MAGIC: [u8; 8] = *b"OMOIDE1\0";
 
 /// Current vault format version.
 /// Increment this when the schema changes. Never change existing version behavior.
-pub const VAULT_VERSION: u16 = 1;
+pub const VAULT_VERSION: u16 = 2;
 
 /// Size of AES-GCM nonce in bytes.
 pub const AES_NONCE_SIZE: usize = 12;
@@ -39,3 +39,12 @@ pub const RLIMIT_CORE_CUR: u64 = 0;
 /// Resource limits for core dumps — set to zero to disable core dumps, preventing
 /// post-mortem analysis of memory by an attacker with local access.
 pub const RLIMIT_CORE_MAX: u64 = 0;
+
+/// Default interval in hours for a new entry.
+pub const SRS_DEFAULT_INTERVAL_HOURS: f32 = 12.0;
+
+/// Default number of consecutive failures for a new entry.
+pub const SRS_DEFAULT_CONSECUTIVE_FAILURES: u8 = 0;
+
+/// Default last rehearsal time for a new entry.
+pub const SRS_DEFAULT_LAST_REHEARSAL: u64 = 0;
