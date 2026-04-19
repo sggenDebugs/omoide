@@ -26,6 +26,7 @@ rand       = { version = "0.10.0-rc.9" }
 uuid       = { version = "1", features = ["v4", "serde"] }
 thiserror  = { version = "2" }
 libc       = { version = "0.2" }
+windows-sys = { version = "<=0.61", features = ["Win32_Foundation"] }
 
 [profile.release]
 strip    = "symbols"   # no symbol leakage in release binary

@@ -18,6 +18,9 @@ libc          = { workspace = true }
 uuid          = { workspace = true }
 omoide-env = { version = "0.1.0", path = "../omoide-env" }
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true }
+
 [dev-dependencies]
 tempfile = "3.8"
 

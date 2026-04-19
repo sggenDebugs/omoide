@@ -51,7 +51,8 @@ pub fn suppress_core_dumps() {
 /// its use. Unlocking happens automatically when the value is dropped
 /// if using ZeroizeOnDrop, but mlock itself does not initialize and release here —
 /// this is intentional to avoid a libc dep in omoide-crypto.
-pub fn mlock_secret<T>(_secret: &T) -> bool {
+#[allow(unused_variables)] // function used in release build only
+pub fn mlock_secret<T>(secret: &T) -> bool {
     #[cfg(all(unix, not(debug_assertions)))]
     unsafe {
         let ret = libc::mlock(
@@ -78,7 +79,7 @@ pub fn mlock_secret<T>(_secret: &T) -> bool {
         );
 
         if ret != 0 {
-            let errno = *libc::__errno_location();
+            let errno = windows_sys::Win32::Foundation::GetLastError();
             eprintln!(
                 "[security] VirtualLock failed (errno {}): secret memory may be swappable",
                 errno
