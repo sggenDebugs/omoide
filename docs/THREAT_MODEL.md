@@ -1,5 +1,5 @@
 # Threat Model
-> **Last Updated**: March 1, 2026 \
+> **Last Updated**: May 2, 2026 \
 > **Goal**: Protect master password, decrypted secrets, and recovery seed.
 
 **STRIDE** Model is used.
@@ -20,13 +20,15 @@
 - **Risk**: Core dumps, swap files, or debuggers expose decrypted passwords.
 - **Mitigation**:
   - **Use `zeroize`** crate to wipe all secret types on `Drop`. Prevents exposure *after* deallocation but does not prevent swap to disk.
-  - **Swap/hibernation** — Pin secret memory pages with `mlock` (Linux/macOS) 
-    and `VirtualLock` (Windows) via the `memsec` crate before populating them 
-    with plaintext. This prevents the OS from paging secret memory to disk 
-    entirely. Apply to: master password buffer, derived vault key, any 
+  - **Swap/hibernation** — Pin secret memory pages with `mlock` (Linux/macOS)
+    and `VirtualLock` (Windows) via the `memsec` crate before populating them
+    with plaintext. This prevents the OS from paging secret memory to disk
+    entirely. Apply to: master password buffer, derived vault key, any
     decrypted entry held in memory.
-  - **Disable core dumps at runtime** (`libc::setrlimit under unsafe Rust`) 
-  - Avoid logging any sensitive data (even in debug and trace builds). Enforce via `Secret<T>` from `secrecy` crate that implements debug as `[REDACTED]`.
+  - **Disable core dumps at runtime** (`libc::setrlimit under unsafe Rust`)
+  - Avoid logging any sensitive data (even in debug and trace builds). The
+    `secrecy` crate (`Secret<T>` with `[REDACTED]` debug output) is planned
+    for a future phase but is not yet active in the current codebase.
 
 ### 2. **Offline Brute-Force Attack on Vault File**
 - **STRIDE Category**: Information Disclosure

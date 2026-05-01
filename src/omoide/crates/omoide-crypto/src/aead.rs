@@ -21,7 +21,7 @@ pub fn encrypt_entry(
     let mut buffer = plaintext.to_vec();
     cipher
         .encrypt_in_place(nonce, aad, &mut buffer)
-        .map_err(|_| CryptoError::DecryptionFailed)?;
+        .map_err(|_| CryptoError::EncryptionFailed)?;
 
     Ok(buffer)
 }

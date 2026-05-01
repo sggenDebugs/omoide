@@ -284,6 +284,11 @@ fn prompt(msg: &str) -> String {
 }
 
 fn main() {
+    if std::env::args().any(|msg| msg == "--version" || msg == "-V") {
+        println!("omoide {}", env!("CARGO_PKG_VERSION"));
+        return;
+    }
+
     println!("Initializing Omoide CLI Demo...");
     #[cfg(unix)]
     omoide_core::security::suppress_core_dumps();

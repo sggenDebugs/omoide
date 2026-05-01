@@ -11,6 +11,9 @@ pub enum CryptoError {
     #[error("decryption failed")]
     DecryptionFailed,
 
+    #[error("encryption failed")]
+    EncryptionFailed,
+
     #[error("invalid key length")]
     InvalidKeyLength,
 }

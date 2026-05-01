@@ -406,7 +406,6 @@ dependencies = [
  "omoide-env",
  "omoide-format",
  "rand",
- "secrecy",
 ]
 
 [[package]]
@@ -419,7 +418,6 @@ dependencies = [
  "omoide-env",
  "omoide-format",
  "rand",
- "secrecy",
  "serde",
  "tempfile",
  "thiserror",
@@ -436,7 +434,6 @@ dependencies = [
  "argon2",
  "hkdf",
  "omoide-env",
- "secrecy",
  "serde",
  "sha2",
  "thiserror",
@@ -572,16 +569,6 @@ name = "rustversion"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
-
-[[package]]
-name = "secrecy"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bd1c54ea06cfd2f6b63219704de0b9b4f72dcc2b8fdef820be6cd799780e91e"
-dependencies = [
- "serde",
- "zeroize",
-]
 
 [[package]]
 name = "semver"

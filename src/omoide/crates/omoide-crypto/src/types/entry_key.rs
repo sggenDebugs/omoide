@@ -15,6 +15,13 @@ impl EntryKey {
         Self([0u8; ENTRY_KEY_SIZE])
     }
 
+    /// Construct an `EntryKey` from a raw 32-byte array.
+    /// Intended for use in fuzz testing and test helpers where key material
+    /// is already available as a byte array.
+    pub fn from_bytes(bytes: &[u8; ENTRY_KEY_SIZE]) -> Self {
+        Self(*bytes)
+    }
+
     pub fn expose_secret(&self) -> &[u8; ENTRY_KEY_SIZE] {
         &self.0
     }

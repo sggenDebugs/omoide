@@ -13,7 +13,6 @@ serde         = { workspace = true }
 ciborium      = { workspace = true }
 thiserror     = { workspace = true }
 zeroize       = { workspace = true }
-secrecy       = { workspace = true }
 libc          = { workspace = true }
 uuid          = { workspace = true }
 omoide-env = { version = "0.1.0", path = "../omoide-env" }

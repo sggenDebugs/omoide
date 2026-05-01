@@ -14,7 +14,7 @@ Most password managers treat memory as a liability — they autofill everything 
 
 | Feature | Description |
 |---|---|
-| **Encrypted Vault** | AES-256-GCM encryption at rest via `ring` |
+| **Encrypted Vault** | AES-256-GCM encryption at rest via `aes-gcm` |
 | **Recall Mode** | Periodically prompts you to re-enter your master password. Incorrect guesses shorten the re-prompt interval — training memory, penalising complacency |
 | **Emergency Recovery** | Optional BIP39 12-word seed phrase for vault recovery. **Never written to disk** |
 | **Auto-Clear Clipboard** | Copied passwords are zeroed from the clipboard after 8 seconds |
@@ -29,8 +29,8 @@ Most password managers treat memory as a liability — they autofill everything 
 
 | Layer | Algorithm | Library | Rationale |
 |---|---|---|---|
-| **Vault Encryption** | AES-256-GCM | `ring` | AEAD; provides both confidentiality and integrity |
-| **Key Derivation** | Argon2id | `argon2` | Memory-hard (64 MB, 3 iterations, per-vault salt); resists GPU/ASIC brute-force |
+| **Vault Encryption** | AES-256-GCM | `aes-gcm` | AEAD; provides both confidentiality and integrity |
+| **Key Derivation** | Argon2id | `argon2` | Memory-hard (64 MB, 4 iterations, per-vault salt); resists GPU/ASIC brute-force |
 | **Secret Erasure** | zeroing via `zeroize` | `zeroize` crate | Prevents compiler from optimising out zeroing of sensitive stack/heap values |
 | **Recovery** | BIP39 (128-bit entropy) | `bip39` | Industry-standard; 12-word phrase maps deterministically to vault key |
 
@@ -51,7 +51,7 @@ Recall Mode is Omoide's differentiating feature. Rather than a passive auto-lock
 1. After a configurable idle period, Omoide overlays a re-entry prompt.
 2. Each **correct** entry resets the timer and slightly extends the next interval (up to a ceiling).
 3. Each **incorrect** entry halves the next re-prompt interval — down to a minimum floor — and increments a local strike counter.
-4. The strike counter is persisted (encrypted) so rebooting does not reset it.
+4. The strike counter is persisted in the vault header (plaintext metadata only; entry content remains encrypted) so rebooting does not reset it.
 
 This creates a continuous, low-friction spaced-repetition loop for your master password — the same cognitive mechanism used in language learning and flashcard systems like Anki Flashcards.
 
@@ -75,7 +75,7 @@ This creates a continuous, low-friction spaced-repetition loop for your master p
 
 ![Architecture](resources/images/architecture.png)
 
-*Workspace Omoide crates are separated by trust boundary (e.g. `omoide-crypto` never depends on `omoide-store`).*
+*Workspace Omoide crates are separated by trust boundary (e.g. `omoide-crypto` never depends on `omoide-format`).*
 
 ---
 
@@ -84,7 +84,7 @@ This creates a continuous, low-friction spaced-repetition loop for your master p
 | Milestone | Target | Status |
 |---|---|---|
 | Core crypto primitives + vault format | 2026-03 | Completed |
-| Recall Mode engine | 2026-04 | In Progress |
+| Recall Mode engine | 2026-04 | Completed |
 | Desktop UI (egui prototype) | 2026-05 | Planned |
 | BIP39 recovery flow | 2026-06 | Planned |
 | Security audit + hardening | 2026-07 | Planned |
