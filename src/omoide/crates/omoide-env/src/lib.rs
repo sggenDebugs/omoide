@@ -48,3 +48,11 @@ pub const SRS_DEFAULT_CONSECUTIVE_FAILURES: u8 = 0;
 
 /// Default last rehearsal time for a new entry.
 pub const SRS_DEFAULT_LAST_REHEARSAL: u64 = 0;
+
+/// Default timeout in seconds for the reprompt window.
+/// If the user does not respond within this time, secrets are zeroized.
+pub const REPROMPT_TIMEOUT_SECS: u64 = 60;
+
+/// Maximum number of password attempts allowed during a single reprompt session
+/// before the vault is locked and all secrets are zeroized.
+pub const REPROMPT_MAX_RETRIES: u8 = 3;

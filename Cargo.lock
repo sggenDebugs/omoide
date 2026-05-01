@@ -418,6 +418,7 @@ dependencies = [
  "omoide-crypto",
  "omoide-env",
  "omoide-format",
+ "rand",
  "secrecy",
  "serde",
  "tempfile",

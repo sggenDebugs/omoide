@@ -1,12 +1,20 @@
+use omoide_core::error::AuthError;
+use omoide_core::orchestrator::AuthOrchestrator;
+use omoide_core::srs::get_current_time_secs;
 use omoide_core::vault::{open, seal};
-use omoide_crypto::aead::{decrypt_entry, encrypt_entry};
+use omoide_crypto::aead::encrypt_entry;
 use omoide_crypto::kdf::{derive_entry_key, derive_master_key, KdfParams};
-use omoide_env::{AES_NONCE_SIZE, ENTRY_ID_SIZE, HEADER_AAD_SIZE, KDF_SALT_SIZE};
+use omoide_env::{
+    AES_NONCE_SIZE, ENTRY_ID_SIZE, HEADER_AAD_SIZE, KDF_SALT_SIZE, REPROMPT_MAX_RETRIES,
+    REPROMPT_TIMEOUT_SECS,
+};
 use omoide_format::schema::{EncryptedEntry, Entry, VaultFile, VaultHeader};
 use rand::{rngs::SysRng, TryRng};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::thread;
+use std::time::Duration;
 
 fn generate_random_bytes<const N: usize>() -> [u8; N] {
     let mut buf = [0u8; N];
@@ -127,131 +135,144 @@ fn setup_vaults() -> (PathBuf, PathBuf) {
     (v1, v2)
 }
 
+fn print_entries(orch: &AuthOrchestrator) {
+    if let Some(entries) = orch.entries() {
+        println!("\n--- Vault Entries ---");
+        for entry in entries {
+            println!("Title:    {}", entry.title);
+            println!("Username: {}", entry.username);
+            println!("Password: {}", entry.password);
+            println!("URL:      {}", entry.url);
+            println!("---------------------");
+        }
+    }
+}
+
+/// Unlock a vault and display its contents, then return control.
 fn display_vault(path: &Path, password: &str) -> bool {
-    println!("\n[DEBUG] Accessing locked vault at {:?}", path);
-    let vault = match open(path) {
-        Ok(v) => {
-            println!("[DEBUG] Vault file loaded successfully into memory.");
+    let mut orch = AuthOrchestrator::new(path.to_path_buf())
+        .with_timeout(REPROMPT_TIMEOUT_SECS)
+        .with_max_retries(REPROMPT_MAX_RETRIES);
+
+    println!("\n[DEBUG] Accessing vault at {:?}", path);
+
+    match orch.unlock(password) {
+        Ok(()) => {
             println!(
-                "[DEBUG] Vault header contains: KDF salt ({} bytes), AAD ({} bytes)",
-                v.header.salt.len(),
-                v.header.header_aad.len()
+                "[DEBUG] Vault unlocked successfully. State: {}",
+                orch.state_label()
             );
-            println!(
-                "[DEBUG] Locked vault contains {} encrypted entries.",
-                v.entries.len()
-            );
-            v
         }
         Err(e) => {
-            println!(" Failed to read vault file: {}", e);
+            println!("[ERROR] Failed to unlock vault: {}", e);
             return false;
         }
-    };
-
-    let now = omoide_core::srs::get_current_time_secs();
-    let is_due = omoide_core::srs::is_rehearsal_due(&vault.header.srs_state, now);
-    if is_due {
-        println!("\n*******************************************************");
-        println!("[SECURITY] MANDATORY RECALL MODE TRIGGERED!");
-        println!(
-            "[SECURITY] Rehearsal interval ({:.1}h) has elapsed.",
-            vault.header.srs_state.current_interval_hours
-        );
-        println!("[SECURITY] To maintain vault access and fight cognitive decay,");
-        println!("[SECURITY] you must explicitly type your Master Password.");
-        println!("*******************************************************\n");
-        // In a real app with biometrics, we would disable biometrics here.
-    } else {
-        println!("[DEBUG] SRS Rehearsal is not due yet. Proceeding with normal unlock.");
     }
 
-    println!("[DEBUG] Applying KDF (Argon2id) to derive master key from password...");
-    let master_key = match derive_master_key(
-        password.as_bytes(),
-        &vault.header.salt,
-        &vault.header.kdf_params,
-    ) {
-        Ok(key) => {
-            println!("[DEBUG] KDF complete. Master key derived successfully.");
-            key
-        }
-        Err(e) => {
-            println!(" KDF failed: {}", e);
-            return false;
-        }
-    };
-
-    let mut decrypted_entries = Vec::new();
-    println!("[DEBUG] Processing encrypted entries...");
-    for (i, enc_entry) in vault.entries.iter().enumerate() {
-        println!("[DEBUG] -> Entry {}: Deriving unique entry key...", i + 1);
-        let entry_key = match derive_entry_key(&master_key, &enc_entry.id, b"entry-enc") {
-            Ok(k) => k,
-            Err(e) => {
-                println!("[DEBUG] -> Entry {}: Key derivation failed: {}", i + 1, e);
-                continue;
-            }
-        };
-
-        println!(
-            "[DEBUG] -> Entry {}: Decrypting ciphertext ({} bytes)...",
-            i + 1,
-            enc_entry.ciphertext.len()
-        );
-        match decrypt_entry(
-            &entry_key,
-            &enc_entry.nonce,
-            &vault.header.header_aad,
-            &enc_entry.ciphertext,
-        ) {
-            Ok(pt) => {
-                println!(
-                    "[DEBUG] -> Entry {}: Decrypted successfully. Unlocked! decoding CBOR...",
-                    i + 1
-                );
-                let entry: Entry = ciborium::de::from_reader(pt.as_slice()).unwrap();
-                decrypted_entries.push(entry);
-            }
-            Err(e) => {
-                println!("[DEBUG] Authentication failed for entry {}! Incorrect master password or corrupted entry: {}", i + 1, e);
-                return false;
-            }
-        }
-    }
-
-    println!("\n Master Password Correct! Vault completely unlocked.");
-
-    // Phase 2: Write back the updated SRS State after a successful unlock
-    if is_due {
-        let mut updated_vault = vault;
-        updated_vault.header.srs_state.last_rehearsal = now;
-        updated_vault.header.srs_state.current_interval_hours = omoide_core::srs::next_interval(
-            updated_vault.header.srs_state.current_interval_hours,
-            true,
-        );
-
-        println!(
-            "[DEBUG] SRS State updated! Next rehearsal in {:.1} hours.",
-            updated_vault.header.srs_state.current_interval_hours
-        );
-        if let Err(e) = seal(&updated_vault, path) {
-            println!(
-                "[WARNING] Failed to commit updated SRS state to vault: {}",
-                e
-            );
-        }
-    }
-
-    println!("--- Vault Entries ---");
-    for e in decrypted_entries {
-        println!("Title: {}", e.title);
-        println!("Username: {}", e.username);
-        println!("Password: {}", e.password);
-        println!("URL: {}", e.url);
-        println!("---------------------");
-    }
+    print_entries(&orch);
     true
+}
+
+/// Interactive session loop — keeps the vault unlocked in memory and drives
+/// periodic reprompt checks, demonstrating the full EAR lifecycle.
+fn run_session_loop(path: &Path, password: &str) {
+    let mut orch = AuthOrchestrator::new(path.to_path_buf())
+        .with_timeout(REPROMPT_TIMEOUT_SECS)
+        .with_max_retries(REPROMPT_MAX_RETRIES);
+
+    println!("\n[SESSION] Starting interactive session for {:?}", path);
+    println!(
+        "[SESSION] Reprompt timeout: {}s | Max retries: {}",
+        REPROMPT_TIMEOUT_SECS, REPROMPT_MAX_RETRIES
+    );
+
+    match orch.unlock(password) {
+        Ok(()) => println!("[SESSION] Vault unlocked. State: {}", orch.state_label()),
+        Err(e) => {
+            println!("[SESSION] Failed to unlock: {}", e);
+            return;
+        }
+    }
+
+    print_entries(&orch);
+
+    println!("\n[SESSION] Entering reprompt loop. Type 'quit' to exit, or wait for reprompt.");
+    println!("[SESSION] Use option 4 from the main menu first to force an immediate reprompt.\n");
+
+    loop {
+        // Give the user a chance to type a command between ticks.
+        print!("[SESSION] (tick) > ");
+        io::stdout().flush().unwrap();
+
+        // Non-blocking: sleep briefly then check state.
+        thread::sleep(Duration::from_secs(2));
+
+        let now = get_current_time_secs();
+
+        // Check timeout first (takes priority over new reprompt).
+        if orch.check_timeout(now) {
+            println!("\n[SESSION] *** REPROMPT TIMED OUT — Vault locked. Secrets zeroized. ***");
+            break;
+        }
+
+        // Check if a reprompt is now due.
+        if orch.check_reprompt(now) {
+            println!("\n[SESSION] *** EMERGENCY ACCESS REHEARSAL TRIGGERED ***");
+            println!("[SESSION] State: {}", orch.state_label());
+
+            // Drive the reprompt interaction.
+            loop {
+                let pw = prompt("[SESSION] Re-enter Master Password (or 'quit' to abort): ");
+                if pw.trim() == "quit" {
+                    orch.lock();
+                    println!("[SESSION] Vault manually locked. Secrets zeroized.");
+                    return;
+                }
+
+                match orch.submit_reprompt(pw.trim()) {
+                    Ok(()) => {
+                        println!(
+                            "[SESSION] Reprompt successful! Interval extended. State: {}",
+                            orch.state_label()
+                        );
+                        print_entries(&orch);
+                        break;
+                    }
+                    Err(AuthError::RepromptFailed { retries_left }) => {
+                        println!(
+                            "[SESSION] Wrong password. {} retr{} remaining.",
+                            retries_left,
+                            if retries_left == 1 { "y" } else { "ies" }
+                        );
+                    }
+                    Err(AuthError::AllRetriesExhausted) => {
+                        println!("[SESSION] *** ALL RETRIES EXHAUSTED — Vault locked. Secrets zeroized. ***");
+                        return;
+                    }
+                    Err(e) => {
+                        println!("[SESSION] Unexpected error: {}", e);
+                        orch.lock();
+                        return;
+                    }
+                }
+            }
+        } else {
+            // No reprompt due yet — show status.
+            let vault = open(orch.vault_path()).unwrap();
+            let srs = &vault.header.srs_state;
+            let interval_secs = (srs.current_interval_hours * 3600.0) as u64;
+            let due_at = srs.last_rehearsal + interval_secs;
+            let remaining = due_at.saturating_sub(now);
+            println!(
+                "State: {} | Next rehearsal in {}s",
+                orch.state_label(),
+                remaining
+            );
+        }
+
+        // Check if user typed something.
+        // In a real TUI we'd use async I/O; for demo we just poll stdin after the sleep.
+    }
 }
 
 fn prompt(msg: &str) -> String {
@@ -274,43 +295,53 @@ fn main() {
     println!("  2. Vault B (password: '12345')");
 
     loop {
-        println!("Select an option:");
-        println!("1) Unlock Vault A");
-        println!("2) Unlock Vault B");
+        println!("\nSelect an option:");
+        println!("1) Unlock Vault A (one-shot)");
+        println!("2) Unlock Vault B (one-shot)");
         println!("3) Generate Master Password (Wizard)");
-        println!("4) Fast-Forward Time (Force Recall Mode)");
-        println!("5) Exit");
+        println!("4) Fast-Forward Time (Force Recall Mode on Vault B)");
+        println!("5) Start Session Loop for Vault A");
+        println!("6) Start Session Loop for Vault B");
+        println!("7) Exit");
 
         let choice = prompt("> ");
-        let selected_path = match choice.as_str() {
-            "1" => &v1,
-            "2" => &v2,
+        match choice.as_str() {
+            "1" => {
+                let pw = prompt("Enter Master Password for Vault A: ");
+                display_vault(&v1, &pw);
+            }
+            "2" => {
+                let pw = prompt("Enter Master Password for Vault B: ");
+                display_vault(&v2, &pw);
+            }
             "3" => {
                 anchor_memory_wizard();
-                continue;
             }
             "4" => {
                 println!("[DEBUG] Simulating time advancing by updating the Vault B header...");
                 if let Ok(mut v) = open(&v2) {
-                    v.header.srs_state.last_rehearsal = 10; // set 10 seconds since epoch to guarantee due
+                    v.header.srs_state.last_rehearsal = 10;
                     let _ = seal(&v, &v2);
                     println!("[DEBUG] Time leap successful. Try opening Vault B next.");
                 } else {
                     println!("[ERROR] Could not open Vault B.");
                 }
-                continue;
             }
             "5" => {
+                let pw = prompt("Enter Master Password for Vault A: ");
+                run_session_loop(&v1, &pw);
+            }
+            "6" => {
+                let pw = prompt("Enter Master Password for Vault B: ");
+                run_session_loop(&v2, &pw);
+            }
+            "7" => {
                 println!("Goodbye!");
                 break;
             }
             _ => {
                 println!("Invalid choice. Please try again.");
-                continue;
             }
-        };
-
-        let pw = prompt("Enter Master Password: ");
-        display_vault(selected_path, &pw);
+        }
     }
 }
