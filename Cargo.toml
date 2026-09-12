@@ -1,8 +1,13 @@
 # Cargo.toml (workspace root)
 [workspace]
 resolver = "2"
-members = ["src/omoide/crates/omoide-cli",
-    "src/omoide/crates/omoide-core", "src/omoide/crates/omoide-crypto", "src/omoide/crates/omoide-env", "src/omoide/crates/omoide-format"
+members = [
+    "omoide-tauri/src-tauri",
+    "omoide-tauri/src-tauri/crates/omoide-cli",
+    "omoide-tauri/src-tauri/crates/omoide-core",
+    "omoide-tauri/src-tauri/crates/omoide-crypto",
+    "omoide-tauri/src-tauri/crates/omoide-env",
+    "omoide-tauri/src-tauri/crates/omoide-format",
 ]
 
 [workspace.package]

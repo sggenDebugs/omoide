@@ -46,4 +46,4 @@ jobs:
         
       - name: Build fuzz targets
         # Compile-only gate — full fuzzing is a separate nightly job
-        run: cargo build --manifest-path src/omoide/crates/omoide-crypto/fuzz/Cargo.toml
+        run: cargo build --manifest-path omoide-tauri/src-tauri/crates/omoide-crypto/fuzz/Cargo.toml

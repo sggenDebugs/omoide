@@ -34,10 +34,11 @@ pub fn suppress_core_dumps() {
     }
 
     // macOS only — denies debugger attachment at the kernel level
-    #[cfg(target_os = "macos")]
-    unsafe {
-        libc::ptrace(PT_DENY_ATTACH, 0, 0, 0);
-    }
+    // #[cfg(target_os = "macos")]
+    // unsafe {
+    //     const PT_DENY_ATTACH: libc::c_int = 31;
+    //     libc::ptrace(PT_DENY_ATTACH, 0, std::ptr::null_mut(), 0);
+    // }
 }
 
 /// Locks a secret value's memory pages, preventing the OS from paging
