@@ -1,6 +1,7 @@
 import "./App.css";
 import { useVault, VaultContextProvider } from "./context/vaultContext";
 import { VaultLogin } from "./components/vaultLogin";
+import { VaultDashboard } from "./components/vaultDashboard";
 
 const AppContent = () => {
   const {state} = useVault();
@@ -8,6 +9,8 @@ const AppContent = () => {
   switch(state) {
     case "Locked":
       return <VaultLogin />;
+    case "Unlocked":
+      return <VaultDashboard />;
   }
 }
 function App() {

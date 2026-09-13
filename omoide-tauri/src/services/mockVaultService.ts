@@ -1,3 +1,4 @@
+import { VaultEntryMetadata } from "./entries.types";
 import { VaultState } from "./vault.types"
 
 // Mock vault state
@@ -6,6 +7,12 @@ let currentState: VaultState = {
     retriesRemaining: 2,
     nextSRS: 300
 };
+
+const mockEntries: VaultEntryMetadata[] = [
+    { id: "1", title: "Sample Entry 1", username: "sampleEntry1", createdAt: 1718200000, updatedAt: 1718200000 },
+    { id: "2", title: "Sample Entry 2", username: "sampleEntry2", url: "https://www.sample2.com", createdAt: 20000000, updatedAt: 20000000 },
+    { id: "3", title: "Sample Entry 3", username: "sampleEntry3", url: "https://www.sample3.com", createdAt: 9999999999, updatedAt: 9999999999 }
+]
 
 export const mockVaultService = {
     /**
@@ -55,5 +62,25 @@ export const mockVaultService = {
             currentState.orchestratorState = "AwaitingReprompt";
         }
         return isDue;
+    },
+
+    /**
+     * Get entries stub
+     */
+    getEntries: async (): Promise<VaultEntryMetadata[]> => {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        if (currentState.orchestratorState != "Unlocked") {
+            throw new Error("Vault is not yet unlocked!");
+        }
+        return mockEntries;
+
+    },
+
+    /**
+     * Copy password stub
+     */
+    copyPassword: async(id: string): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        console.log(`[REDACTED] password copied for ${id}.`);
     }
 };

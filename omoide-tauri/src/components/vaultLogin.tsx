@@ -1,29 +1,24 @@
 import { useState } from "react";
 import { useVault } from "../context/vaultContext";
+import { useAsyncState } from "../hooks/useAsyncState";
 
 export const VaultLogin = () => {
     const { unlock } = useVault();
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const { error, isLoading, execute } = useAsyncState<void>();
 
     const handleUnlock = async () => {
-        setIsLoading(true);
-        setError(null);
         try {
-            await unlock(password);
+            await execute(() => unlock(password));
             console.log('Vault unlocked! Transitioning to dashboard...');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
             setPassword('');
-        } finally {
-            setIsLoading(false);
         }
     };
 
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-            <h1 className="text-2xl font-bold mb-4">Omoide</h1>
+            <h1 className="text-2xl font-bold mb-4">思い出</h1>
             <input
                 type="password"
                 value={password}
