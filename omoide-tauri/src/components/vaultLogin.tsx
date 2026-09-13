@@ -1,34 +1,45 @@
 import { useState } from "react";
-import { mockVaultService } from "../services/mockVaultService";
+import { useVault } from "../context/vaultContext";
 
 export const VaultLogin = () => {
+    const { unlock } = useVault();
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleUnlock = async () => {
+        setIsLoading(true);
+        setError(null);
         try {
-            setError(null);
-            await mockVaultService.unlockVault(password);
+            await unlock(password);
             console.log('Vault unlocked! Transitioning to dashboard...');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            setPassword('');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Unlock Omoide</h2>
+        <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+            <h1 className="text-2xl font-bold mb-4">Omoide</h1>
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="border p-2 w-full mb-2"
+                className="p-2 rounded bg-gray-800 border border-gray-700 mb-2 w-64"
                 placeholder="Master Password"
+                disabled={isLoading}
             />
-            <button onClick={handleUnlock} className="bg-blue-500 text-white p-2 rounded">
-                Unlock
+            <button
+                onClick={handleUnlock}
+                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-500 p-2 rounded w-64 transition-colors"
+            >
+                {isLoading ? 'Deriving Key...' : 'Unlock'}
             </button>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-400 mt-2 text-sm">{error}</p>}
         </div>
     );
 }
