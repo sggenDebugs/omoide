@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 interface AsyncState<T> {
     data: T | null;
     error: string | null;
-    isLoading: boolean | undefined;   
+    isLoading: boolean;   
 }
 
 export function useAsyncState<T>() {

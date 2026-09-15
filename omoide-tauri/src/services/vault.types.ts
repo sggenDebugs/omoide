@@ -1,7 +1,7 @@
 export type OrchestratorState = "Locked" | "Unlocked" | "AwaitingReprompt";
 export type EncryptionAlgorithm = 'AES-256-GCM';
 
-export interface VaultState {
+export interface VaultAuthState {
     /**
      * Auth orchestrator state:
      * - Locked

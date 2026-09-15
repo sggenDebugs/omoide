@@ -1,8 +1,8 @@
 import { VaultEntryMetadata } from "./entries.types";
-import { VaultState } from "./vault.types"
+import { VaultAuthState } from "./vault.types"
 
 // Mock vault state
-let currentState: VaultState = {
+let currentState: VaultAuthState = {
     orchestratorState: "Locked",
     retriesRemaining: 2,
     nextSRS: 300
@@ -18,7 +18,7 @@ export const mockVaultService = {
     /**
      * Current vault state get processing stub
      */
-    getVaultState: async (): Promise<VaultState> => {
+    getVaultState: async (): Promise<VaultAuthState> => {
         // Mock invoke function call
         await new Promise((resolve) => setTimeout(resolve, 100));
         return { ...currentState };
