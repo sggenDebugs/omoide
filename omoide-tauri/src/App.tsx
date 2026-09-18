@@ -1,7 +1,7 @@
 import "./App.css";
 import { useVault, VaultContextProvider } from "./context/vaultContext";
-import { VaultLogin } from "./components/vaultLogin";
-import { VaultDashboard } from "./components/vaultDashboard";
+import { VaultLogin } from "./pages/vaultLogin";
+import { VaultDashboard } from "./pages/vaultDashboard";
 
 const AppContent = () => {
   const {state} = useVault();

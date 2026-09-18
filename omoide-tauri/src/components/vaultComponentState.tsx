@@ -1,5 +1,6 @@
 import { VaultEntryMetadata } from "../services/entries.types"
 import { mockVaultService } from "../services/mockVaultService";
+import { VaultHeader } from "./vaultHeader";
 
 export const VaultLoading = () => (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -17,30 +18,18 @@ export const VaultError = ({ error }: { error: string }) => (
 );
 
 export const VaultEmpty = ({ lock }: { lock: () => Promise<void> }) => (
-    <div className="min-h-screen bg-gray-900 text-white p-8 flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-4">思い出 Vault</h1>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+        <VaultHeader lock={lock}/>
         <p className="text-gray-400">Your vault is empty. Add your first entry!</p>
-        <button onClick={lock} className="mt-8 bg-red-600 hover:bg-red-500 px-4 py-2 rounded">
-            Lock Vault
-        </button>
     </div>
 );
 
 export const VaultEntries = ({ entries, lock }: {
-    entries: VaultEntryMetadata[]; 
+    entries: VaultEntryMetadata[];
     lock: () => Promise<void>;
 }) => (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-        <header className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">思い出 Vault</h1>
-            <button
-                onClick={lock}
-                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded transition-colors"
-            >
-                Lock Vault
-            </button>
-        </header>
-
+        <VaultHeader lock={lock}/>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {entries.map((entry) => (
                 <div key={entry.id} className="bg-gray-800 p-4 rounded-lg border border-gray-700 flex flex-col h-40">

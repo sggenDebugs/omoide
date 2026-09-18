@@ -3,7 +3,7 @@ import { useVault } from "../context/vaultContext"
 import { VaultEntryMetadata } from "../services/entries.types";
 import { mockVaultService } from "../services/mockVaultService";
 import { useAsyncState } from "../hooks/useAsyncState";
-import {VaultEmpty, VaultEntries, VaultError, VaultLoading} from "./vaultComponentState";
+import { VaultEmpty, VaultEntries, VaultError, VaultLoading } from "../components/vaultComponentState";
 
 export const VaultDashboard = () => {
     const { lock } = useVault();
@@ -22,6 +22,6 @@ export const VaultDashboard = () => {
         return <VaultEmpty lock={lock} />;
     }
     else {
-        return <VaultEntries entries={entries} lock={lock}/>
+        return <VaultEntries entries={entries} lock={lock} />
     }
 }
