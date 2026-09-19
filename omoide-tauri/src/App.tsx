@@ -11,6 +11,10 @@ const AppContent = () => {
       return <VaultLogin />;
     case "Unlocked":
       return <VaultDashboard />;
+    case "AwaitingReprompt":
+      return;
+    default:
+      return;
   }
 }
 function App() {

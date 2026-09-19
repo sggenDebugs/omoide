@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useSRSCountdown } from "../hooks/useSRSCountdown";
 import { VaultEntryMetadata } from "../services/entries.types"
 import { mockVaultService } from "../services/mockVaultService";
 import { VaultHeader } from "./vaultHeader";
@@ -19,7 +21,7 @@ export const VaultError = ({ error }: { error: string }) => (
 
 export const VaultEmpty = ({ lock }: { lock: () => Promise<void> }) => (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-        <VaultHeader lock={lock}/>
+        <VaultHeader lock={lock} />
         <p className="text-gray-400">Your vault is empty. Add your first entry!</p>
     </div>
 );
@@ -27,9 +29,15 @@ export const VaultEmpty = ({ lock }: { lock: () => Promise<void> }) => (
 export const VaultEntries = ({ entries, lock }: {
     entries: VaultEntryMetadata[];
     lock: () => Promise<void>;
-}) => (
+}) => {
+    const [intervalVal] = useState<number>(1000); 
+    const [ count, {startSRSCountdown, stopSRSCountdown, resetSRSCountdown} ] = useSRSCountdown({
+    countStart: 60,
+    intervalMs: intervalVal,
+  }); 
+    return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-        <VaultHeader lock={lock}/>
+        <VaultHeader lock={lock} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {entries.map((entry) => (
                 <div key={entry.id} className="bg-gray-800 p-4 rounded-lg border border-gray-700 flex flex-col h-40">
@@ -52,5 +60,12 @@ export const VaultEntries = ({ entries, lock }: {
                 </div>
             ))}
         </div>
+        <div>
+            <p className="font-semibold text-lg truncate">Count: {count}</p>
+            <button onClick={startSRSCountdown}>start</button>
+            <button onClick={stopSRSCountdown}>stop</button>
+            <button onClick={resetSRSCountdown}>reset</button>
+        </div>
     </div>
-);
+)
+};

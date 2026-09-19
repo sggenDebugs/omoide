@@ -14,6 +14,8 @@ const mockEntries: VaultEntryMetadata[] = [
     { id: "3", title: "Sample Entry 3", username: "sampleEntry3", url: "https://www.sample3.com", createdAt: 9999999999, updatedAt: 9999999999 }
 ]
 
+let nextSRSTime: number | null = null;
+
 export const mockVaultService = {
     /**
      * Current vault state get processing stub
@@ -33,7 +35,11 @@ export const mockVaultService = {
         if (password == "omoide") {
             currentState.orchestratorState = "Unlocked";
             currentState.retriesRemaining = 3;
-            currentState.nextSRS = 300;
+
+            if (currentState.nextSRS) {
+                const timeoutMillis = currentState.nextSRS * 1000;
+                nextSRSTime = Date.now() + timeoutMillis;
+            }
         } else {
             currentState.retriesRemaining = Math.max(
                 0,
@@ -58,7 +64,7 @@ export const mockVaultService = {
     checkSRSReprompt: async (): Promise<boolean> => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         const isDue = Math.random() > 0.7;
-        if (isDue && currentState.orchestratorState == "Locked") {
+        if (isDue && currentState.orchestratorState == "Unlocked") {
             currentState.orchestratorState = "AwaitingReprompt";
         }
         return isDue;
@@ -79,8 +85,26 @@ export const mockVaultService = {
     /**
      * Copy password stub
      */
-    copyPassword: async(id: string): Promise<void> => {
+    copyPassword: async (id: string): Promise<void> => {
         await new Promise((resolve) => setTimeout(resolve, 300));
         console.log(`[REDACTED] password copied for ${id}.`);
+    },
+
+    /**
+    * Simulates user activity, resetting the timer.
+    */
+    resetRepromptTimer: async (): Promise<void> => {
+        if (currentState.orchestratorState === 'Unlocked' && nextSRSTime && currentState.nextSRS) {
+            const timeoutMs = currentState.nextSRS * 1000;
+            nextSRSTime = Date.now() + timeoutMs;
+        }
+    },
+
+    /**
+    * Returns the absolute timestamp for the next reprompt.
+    * Useful for calculating the progress bar width in React.
+    */
+    getNextRepromptTimestamp: async (): Promise<number | null> => {
+        return nextSRSTime;
     }
 };
